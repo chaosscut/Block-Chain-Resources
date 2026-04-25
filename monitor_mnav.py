@@ -46,8 +46,8 @@ if __name__ == "__main__":
     current_mnav = get_mstr_mnav()
     print(f"Current mNAV: {current_mnav}")
     
-    # 设定你的买入观察阈值，比如 1.15
-    THRESHOLD = 1.15
+    # 设定你的买入观察阈值，比如 1.3
+    THRESHOLD = 1.3
     
     if current_mnav and current_mnav <= THRESHOLD:
         send_notification(current_mnav)
