@@ -1,53 +1,63 @@
 import requests
+from bs4 import BeautifulSoup
 import re
 import os
 
 def get_mstr_mnav():
-    # 提示：strategy.com 的数据通常在页面源码或其内部 API 中
-    # 这里我们模拟请求其页面并解析
     url = "https://www.strategy.com/"
     headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
     }
     
     try:
-        response = requests.get(url, headers=headers, timeout=15)
-        # 实际开发时，我会根据该网站当时的 HTML 结构进行正则提取
-        # 假设我们寻找类似 "mNAV": 1.25 这样的字段
-        # 下面是演示逻辑：
-        content = response.text
-        # 寻找 mNAV 数值（具体正则需根据网页实时结构调整）
-        match = re.search(r'mNAV.*?(\d+\.\d+)', content)
-        if match:
-            return float(match.group(1))
-        else:
-            # 如果主页不好抓，可以考虑备用数据源如 mstrtracker.com
-            return None
+        response = requests.get(url, headers=headers, timeout=20)
+        # 使用 BeautifulSoup 解析 HTML 结构
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # 策略 1：定位包含 "mNAV" 文本的标签
+        # strategy.com 的数值通常放在某个特定的 class 或 span 中
+        # 我们先打印出所有包含 mNAV 的文本块进行精准定位
+        mnav_elements = soup.find_all(string=re.compile("mNAV"))
+        
+        for element in mnav_elements:
+            # 寻找该文本附近的数字（通常是下一个兄弟节点或父节点的内容）
+            parent_text = element.parent.get_text()
+            # 匹配 1.xx 或 2.xx 这种符合常理的溢价率
+            match = re.search(r'([0-2]\.\d{2})', parent_text)
+            if match:
+                return float(match.group(1))
+        
+        # 策略 2：如果策略 1 失败，使用备用可靠数据源 (MSTRTracker)
+        # 这个网站的数据结构更简单，专门为抓取设计
+        backup_res = requests.get("https://mstrtracker.com/", timeout=10)
+        # 寻找类似 1.25x 的字符串
+        backup_match = re.search(r'(\d+\.\d+)x', backup_res.text)
+        if backup_match:
+            val = float(backup_match.group(1))
+            if 0.5 < val < 10.0: # 确保数值在合理区间
+                return val
+                
+        return None
     except Exception as e:
-        print(f"Error fetching data: {e}")
+        print(f"抓取异常: {e}")
         return None
 
 def send_notification(mnav):
-    # 这里建议使用微信推送服务，如 'Server酱' 或 'PushDeer'
-    # 只需要一个 URL 就能给手机发消息
     push_token = os.getenv("PUSH_TOKEN")
-    if not push_token:
-        print("未设置推送 Token")
-        return
+    if not push_token: return
 
-    title = f"MSTR 买入机会告警！"
-    content = f"当前 mNAV 为 {mnav}，已低于预设阈值。请关注 MSTR 股价及 BTC 走势。"
+    # 针对您的需求：低位提醒
+    title = "MSTR 投资机会提醒"
+    content = f"检测到 mNAV 已跌至：{mnav}。当前设定阈值为 1.30。"
     
-    # 以 PushDeer 为例
+    # PushDeer 发送逻辑
     push_url = f"https://api2.pushdeer.com/send?pushkey={push_token}&text={title}&desp={content}"
     requests.get(push_url)
 
 if __name__ == "__main__":
     current_mnav = get_mstr_mnav()
-    print(f"Current mNAV: {current_mnav}")
+    print(f"Final Checked mNAV: {current_mnav}")
     
-    # 设定你的买入观察阈值，比如 1.3
-    THRESHOLD = 1.3
-    
+    THRESHOLD = 1.30
     if current_mnav and current_mnav <= THRESHOLD:
         send_notification(current_mnav)
