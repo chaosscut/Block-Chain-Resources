@@ -44,34 +44,32 @@ def get_mstr_mnav():
 
 def send_notification(mnav):
     push_token = os.getenv("PUSH_TOKEN")
-    if not push_token:
-        print("Error: No PUSH_TOKEN found.")
-        return
+    if not push_token: return
 
-    # 官方推荐的最稳接口
+    # 尝试使用 POST 方法，这通常能绕过防火墙的 URL 过滤
     url = "https://api2.pushdeer.com/send"
     
-    # 彻底去掉中文，先用纯英文测试，排除编码干扰
+    # 将数据放在 data 里，而不是 URL 参数里
     payload = {
         "pushkey": push_token,
         "text": "MSTR-mNAV-Alert",
-        "desp": f"Current_mNAV_is_{mnav}",
+        "desp": f"Current mNAV: {mnav}",
         "type": "markdown"
     }
     
-    print(f"Sending request to {url} with Token prefix {push_token[:4]}")
+    print(f"Switching to POST request for reliability...")
 
     try:
-        # 使用 params 让 requests 自动处理 URL 编码 (?key=val)
-        response = requests.get(url, params=payload, timeout=15)
+        # 改用 requests.post
+        response = requests.post(url, data=payload, timeout=15)
         
-        # 打印返回的前 100 字符
+        # 看看结果
         print(f"Push Result: {response.text[:100]}")
         
         if '"code":0' in response.text:
-            print("Successfully triggered notification!")
+            print("Successfully triggered via POST!")
     except Exception as e:
-        print(f"Request failed: {e}")
+        print(f"POST request failed: {e}")
         
 if __name__ == "__main__":
     current_mnav = get_mstr_mnav()
