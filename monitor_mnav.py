@@ -51,11 +51,7 @@ def send_notification(mnav):
     title = "MSTR_Buy_Alert"  # 标题尽量不要有特殊符号
     content = f"mNAV_is_{mnav}"
     
-    # 格式 A (官方推荐):
-    push_url = f"https://api2.pushdeer.com/send?pushkey={push_token}&text={title}&desp={content}"
-    
-    # 如果 A 还是 404，请尝试 格式 B (去掉 api2):
-    # push_url = f"https://www.pushdeer.com/send?pushkey={push_token}&text={title}&desp={content}"
+    push_url = f"https://www.pushdeer.com/send?pushkey={push_token}&text={title}&desp={content}"
 
     try:
         res = requests.get(push_url)
