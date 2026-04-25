@@ -58,6 +58,11 @@ if __name__ == "__main__":
     current_mnav = get_mstr_mnav()
     print(f"Final Checked mNAV: {current_mnav}")
     
-    THRESHOLD = 1.90
+    THRESHOLD = 1.90 
+    print(f"Checking threshold: {current_mnav} <= {THRESHOLD}")
+
     if current_mnav and current_mnav <= THRESHOLD:
+        print("Conditions met. Attempting to send notification...")
         send_notification(current_mnav)
+    else:
+        print("Conditions NOT met. Skipping notification.")
