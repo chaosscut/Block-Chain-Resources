@@ -43,24 +43,27 @@ def get_mstr_mnav():
         return None
 
 def send_notification(mnav):
-    # 必须确保这里的名字和 GitHub Secrets 里的名字一模一样
-    push_token = os.getenv("PUSH_TOKEN") 
-    
-    if not push_token:
-        print("Error: PUSH_TOKEN environment variable is EMPTY!")
-        return
+    push_token = os.getenv("PUSH_TOKEN")
+    if not push_token: return
 
-    # 这里加上 print，看看 URL 拼接是否正确（注意不要把完整的 key 打印出来，安全起见只打前 4 位）
-    print(f"Using Token starting with: {push_token[:4]}")
+    # 尝试最标准的 PushDeer 接口格式
+    # 如果你是官方云端用户，去掉 api2 试试，或者直接用这个结构
+    title = "MSTR_Buy_Alert"  # 标题尽量不要有特殊符号
+    content = f"mNAV_is_{mnav}"
     
-    push_url = f"https://api2.pushdeer.com/send?pushkey={push_token}&text=MSTR告警&desp=当前mNAV:{mnav}"
+    # 格式 A (官方推荐):
+    push_url = f"https://api2.pushdeer.com/send?pushkey={push_token}&text={title}&desp={content}"
     
+    # 如果 A 还是 404，请尝试 格式 B (去掉 api2):
+    # push_url = f"https://www.pushdeer.com/send?pushkey={push_token}&text={title}&desp={content}"
+
     try:
         res = requests.get(push_url)
-        print(f"Server Response: {res.text}")
+        # 如果看到结果包含 "content"，说明成功了
+        print(f"Push Server Response: {res.text}")
     except Exception as e:
         print(f"Request failed: {e}")
-
+        
 if __name__ == "__main__":
     current_mnav = get_mstr_mnav()
     print(f"Final Checked mNAV: {current_mnav}")
