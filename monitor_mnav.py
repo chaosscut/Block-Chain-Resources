@@ -45,28 +45,30 @@ def get_mstr_mnav():
 def send_notification(mnav):
     push_token = os.getenv("PUSH_TOKEN")
     if not push_token:
-        print("Error: No PUSH_TOKEN found.")
         return
 
-    # 注意：这是 PushDeer 的最标准 API 地址，不要加 api2 或 www
-    url = "https://api2.pushdeer.com/send"
+    # 方案 C：使用最原始、兼容性最强的接口
+    # 彻底避开 api2，直接请求 pushdeer.com 的后端
+    url = f"https://www.pushdeer.com/send?pushkey={push_token}&text=MSTR告警&desp=当前mNAV:{mnav}"
     
-    # 将参数放入字典，requests 会自动处理编码和拼接
-    payload = {
-        "pushkey": push_token,
-        "text": "MSTR mNAV Alert",
-        "desp": f"Current mNAV: {mnav} (Threshold: 1.90)",
-        "type": "markdown"
+    # 关键：模拟一个真实的浏览器，防止被服务器识别为机器人而重定向
+    headers = {
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
     }
-    
+
     try:
-        # 使用 params 传参，这样 requests 会生成像 ?pushkey=xxx&text=xxx 的标准请求
-        response = requests.get(url, params=payload, timeout=10)
+        # 强制不跟随重定向 (allow_redirects=False)
+        response = requests.get(url, headers=headers, timeout=15, allow_redirects=False)
         
-        # 打印返回的前100个字符，如果是成功，应该看到 {"content": {...}}
-        print(f"Push Result: {response.text[:100]}")
+        # 如果返回的是 200 且包含 JSON，则成功
+        if response.status_code == 200:
+            print(f"推送成功: {response.text[:100]}")
+        else:
+            print(f"推送异常，状态码: {response.status_code}")
+            # 如果还是不行，打印出最终生成的 URL (隐藏部分 key 以保安全)
+            print(f"Debug URL: {url[:30]}***{url[-10:]}")
     except Exception as e:
-        print(f"Push Failed: {e}")
+        print(f"请求失败: {e}")
         
 if __name__ == "__main__":
     current_mnav = get_mstr_mnav()
