@@ -43,33 +43,20 @@ def get_mstr_mnav():
         return None
 
 def send_notification(mnav):
-    push_token = os.getenv("PUSH_TOKEN")
-    if not push_token: return
+    # 这里的名字确保和 GitHub Secrets 里的一致
+    bark_key = os.getenv("PUSH_TOKEN") 
+    if not bark_key: return
 
-    # 尝试使用 POST 方法，这通常能绕过防火墙的 URL 过滤
-    url = "https://api2.pushdeer.com/send"
+    # Bark 的标准接口：地址/Key/标题/内容
+    # 我们加入参数使它在 Apple Watch 上显示更美观
+    url = f"https://api.day.app/{bark_key}/MSTR买入告警/当前mNAV为:{mnav}?group=MSTR&icon=https://www.microstrategy.com/favicon.ico"
     
-    # 将数据放在 data 里，而不是 URL 参数里
-    payload = {
-        "pushkey": push_token,
-        "text": "MSTR-mNAV-Alert",
-        "desp": f"Current mNAV: {mnav}",
-        "type": "markdown"
-    }
-    
-    print(f"Switching to POST request for reliability...")
-
+    print("正在通过 Bark 发送推送...")
     try:
-        # 改用 requests.post
-        response = requests.post(url, data=payload, timeout=15)
-        
-        # 看看结果
-        print(f"Push Result: {response.text[:100]}")
-        
-        if '"code":0' in response.text:
-            print("Successfully triggered via POST!")
+        response = requests.get(url, timeout=15)
+        print(f"Bark 返回结果: {response.text}")
     except Exception as e:
-        print(f"POST request failed: {e}")
+        print(f"Bark 请求失败: {e}")
         
 if __name__ == "__main__":
     current_mnav = get_mstr_mnav()
