@@ -1,0 +1,30 @@
+name: MSTR mNAV Monitor
+
+on:
+  schedule:
+    # 这里的 cron 表达式表示：每小时执行一次 (UTC 时间)
+    - cron: '0 * * * *'
+  workflow_dispatch: # 允许你手动点击按钮运行
+
+jobs:
+  check-mnav:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install requests
+
+      - name: Run Monitor Script
+        env:
+          # 在 GitHub Repo 的 Settings -> Secrets 中设置这个变量
+          PUSH_TOKEN: ${{ secrets.PUSH_TOKEN }}
+        run: python monitor_mnav.py
