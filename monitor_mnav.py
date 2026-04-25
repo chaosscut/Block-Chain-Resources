@@ -48,7 +48,7 @@ def send_notification(mnav):
 
     # 针对您的需求：低位提醒
     title = "MSTR 投资机会提醒"
-    content = f"检测到 mNAV 已跌至：{mnav}。当前设定阈值为 1.30。"
+    content = f"检测到 mNAV 已跌至：{mnav}。当前设定阈值为 1.90。"
     
     # PushDeer 发送逻辑
     push_url = f"https://api2.pushdeer.com/send?pushkey={push_token}&text={title}&desp={content}"
@@ -58,6 +58,6 @@ if __name__ == "__main__":
     current_mnav = get_mstr_mnav()
     print(f"Final Checked mNAV: {current_mnav}")
     
-    THRESHOLD = 1.30
+    THRESHOLD = 1.90
     if current_mnav and current_mnav <= THRESHOLD:
         send_notification(current_mnav)
