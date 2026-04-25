@@ -45,28 +45,33 @@ def get_mstr_mnav():
 def send_notification(mnav):
     push_token = os.getenv("PUSH_TOKEN")
     if not push_token:
-        print("错误：未找到 PUSH_TOKEN")
+        print("Error: No PUSH_TOKEN found.")
         return
 
-    # 1. 必须使用 api2.pushdeer.com
-    # 2. 必须包含 /send
-    # 3. 参数必须紧跟其后
-    url = f"https://api2.pushdeer.com/send?pushkey={push_token}&text=MSTR告警&desp=当前mNAV:{mnav}"
+    # 官方推荐的最稳接口
+    url = "https://api2.pushdeer.com/send"
     
-    print("正在尝试最终接口调用...")
+    # 彻底去掉中文，先用纯英文测试，排除编码干扰
+    payload = {
+        "pushkey": push_token,
+        "text": "MSTR-mNAV-Alert",
+        "desp": f"Current_mNAV_is_{mnav}",
+        "type": "markdown"
+    }
+    
+    print(f"Sending request to {url} with Token prefix {push_token[:4]}")
 
     try:
-        # 这次不带任何自定义 Headers，让服务器按标准 API 处理
-        response = requests.get(url, timeout=15)
+        # 使用 params 让 requests 自动处理 URL 编码 (?key=val)
+        response = requests.get(url, params=payload, timeout=15)
         
-        # 如果成功，返回的应该是 JSON
-        if '"code":0' in response.text or '"content"' in response.text:
-            print(f"推送成功！服务器响应: {response.text[:50]}")
-        else:
-            print(f"推送仍未成功，服务器返回内容摘要: {response.text[:100]}")
-            
+        # 打印返回的前 100 字符
+        print(f"Push Result: {response.text[:100]}")
+        
+        if '"code":0' in response.text:
+            print("Successfully triggered notification!")
     except Exception as e:
-        print(f"请求发生异常: {e}")
+        print(f"Request failed: {e}")
         
 if __name__ == "__main__":
     current_mnav = get_mstr_mnav()
