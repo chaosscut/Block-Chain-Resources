@@ -44,21 +44,29 @@ def get_mstr_mnav():
 
 def send_notification(mnav):
     push_token = os.getenv("PUSH_TOKEN")
-    if not push_token: return
+    if not push_token:
+        print("Error: No PUSH_TOKEN found.")
+        return
 
-    # 尝试最标准的 PushDeer 接口格式
-    # 如果你是官方云端用户，去掉 api2 试试，或者直接用这个结构
-    title = "MSTR_Buy_Alert"  # 标题尽量不要有特殊符号
-    content = f"mNAV_is_{mnav}"
+    # 注意：这是 PushDeer 的最标准 API 地址，不要加 api2 或 www
+    url = "https://api2.pushdeer.com/send"
     
-    push_url = f"https://www.pushdeer.com/send?pushkey={push_token}&text={title}&desp={content}"
-
+    # 将参数放入字典，requests 会自动处理编码和拼接
+    payload = {
+        "pushkey": push_token,
+        "text": "MSTR mNAV Alert",
+        "desp": f"Current mNAV: {mnav} (Threshold: 1.90)",
+        "type": "markdown"
+    }
+    
     try:
-        res = requests.get(push_url)
-        # 如果看到结果包含 "content"，说明成功了
-        print(f"Push Server Response: {res.text}")
+        # 使用 params 传参，这样 requests 会生成像 ?pushkey=xxx&text=xxx 的标准请求
+        response = requests.get(url, params=payload, timeout=10)
+        
+        # 打印返回的前100个字符，如果是成功，应该看到 {"content": {...}}
+        print(f"Push Result: {response.text[:100]}")
     except Exception as e:
-        print(f"Request failed: {e}")
+        print(f"Push Failed: {e}")
         
 if __name__ == "__main__":
     current_mnav = get_mstr_mnav()
