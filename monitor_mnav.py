@@ -43,16 +43,23 @@ def get_mstr_mnav():
         return None
 
 def send_notification(mnav):
-    push_token = os.getenv("PUSH_TOKEN")
-    if not push_token: return
-
-    # 针对您的需求：低位提醒
-    title = "MSTR 投资机会提醒"
-    content = f"检测到 mNAV 已跌至：{mnav}。当前设定阈值为 1.90。"
+    # 必须确保这里的名字和 GitHub Secrets 里的名字一模一样
+    push_token = os.getenv("PUSH_TOKEN") 
     
-    # PushDeer 发送逻辑
-    push_url = f"https://api2.pushdeer.com/send?pushkey={push_token}&text={title}&desp={content}"
-    requests.get(push_url)
+    if not push_token:
+        print("Error: PUSH_TOKEN environment variable is EMPTY!")
+        return
+
+    # 这里加上 print，看看 URL 拼接是否正确（注意不要把完整的 key 打印出来，安全起见只打前 4 位）
+    print(f"Using Token starting with: {push_token[:4]}")
+    
+    push_url = f"https://api2.pushdeer.com/send?pushkey={push_token}&text=MSTR告警&desp=当前mNAV:{mnav}"
+    
+    try:
+        res = requests.get(push_url)
+        print(f"Server Response: {res.text}")
+    except Exception as e:
+        print(f"Request failed: {e}")
 
 if __name__ == "__main__":
     current_mnav = get_mstr_mnav()
