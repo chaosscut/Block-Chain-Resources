@@ -23,6 +23,10 @@ jobs:
         run: |
           pip install requests
 
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4
+          
       - name: Run Monitor Script
         env:
           # 在 GitHub Repo 的 Settings -> Secrets 中设置这个变量
